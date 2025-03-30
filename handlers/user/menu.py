@@ -5,6 +5,7 @@ from filters import IsAdmin, IsUser
 
 router = Router()
 
+
 catalog = '🛍️ Каталог'
 cart = '🛒 Корзина'
 delivery_status = '🚚 Статус заказа'
