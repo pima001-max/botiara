@@ -1,31 +1,35 @@
-from aiogram import Bot, Dispatcher, types 
-from aiogram.enums import ParseMode  # Исправлено
-from aiogram.fsm.storage.memory import MemoryStorage  # Исправлено
-from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton  # Исправлено
-from aiogram.filters.command import Command  # Исправлено
-from aiogram.utils.callback_answer import CallbackAnswerMiddleware
-from aiogram.client.bot import DefaultBotProperties  # Новый импорт
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.enums import ParseMode
+from aiogram.client.bot import DefaultBotProperties
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from logging import basicConfig, INFO
-
-from data.config import ADMINS
-from utils.db.storage import DatabaseManager
+from data import config
+from handlers import common_router, admin_router, user_router
+from DatabaseManager import DatabaseManager
 
 user_message = 'Пользователь'
 admin_message = 'Админ'
 
-# Инициализация бота, хранилища и диспетчера
+# Инициализация бота
 bot = Bot(
-    token="7447558856:AAHjeaokhtisccDCyXVN2RagyGsyFPCywAY",
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)  # Исправлено
+    token=config.BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
+
 storage = MemoryStorage()
-dp = Dispatcher(storage=storage)
+dp = Dispatcher(storage=storage)  # Глобальный dispatcher
+
+# Подключение базы данных
 db = DatabaseManager('data/database.db')
+db.connect()  # Устанавливаем соединение при запуске
+
+ADMINS = []
 
 
-@dp.message(Command(commands=["start"]))  # Исправлено
+@dp.message(Command(commands=["start"]))
 async def cmd_start(message: types.Message):
-    # Создаем клавиатуру правильно, добавляя кнопки через KeyboardButton
     markup = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=user_message), KeyboardButton(text=admin_message)]
@@ -38,7 +42,7 @@ async def cmd_start(message: types.Message):
 🤖 Я бот-магазин по подаже товаров любой категории.
 
 🛍️ Чтобы перейти в каталог и выбрать приглянувшиеся 
-товары возпользуйтесь командой /menu.
+товары воспользуйтесь командой /menu.
 
 ❓ Возникли вопросы? Не проблема! Команда /sos поможет 
 связаться с админами, которые постараются как можно быстрее откликнуться.
@@ -63,16 +67,16 @@ async def user_mode(message: types.Message):
 
 async def on_startup():
     basicConfig(level=INFO)
-    db.create_tables()
+    print("Бот стартует")
 
 
-async def main():
-    # Регистрируем middlewares, если нужно
-    dp.message.middleware(CallbackAnswerMiddleware())
+async def main() -> None:
+    dp.include_router(common_router)
+    dp.include_router(admin_router)
+    dp.include_router(user_router)
+
     await on_startup()
-
-    print("Бот запущен!")
-    await dp.start_polling(bot, skip_updates=True)
+    await dp.start_polling(bot)
 
 
 if __name__ == '__main__':

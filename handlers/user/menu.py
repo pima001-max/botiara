@@ -1,6 +1,9 @@
-from aiogram.types import Message, ReplyKeyboardMarkup
-from loader import dp
+from aiogram import Router
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.filters import Command
 from filters import IsAdmin, IsUser
+
+router = Router()
 
 catalog = '🛍️ Каталог'
 cart = '🛒 Корзина'
@@ -11,20 +14,42 @@ orders = '🚚 Заказы'
 questions = '❓ Вопросы'
 
 
-@dp.message_handler(IsAdmin(), commands='menu')
+@router.message(IsAdmin(), Command('menu'))
 async def admin_menu(message: Message):
-    markup = ReplyKeyboardMarkup(selective=True)
-    markup.add(settings)
-    markup.add(questions, orders)
+    # Создаем клавиатуру с кнопками для администратора
+    markup = ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        selective=True,
+        keyboard=[
+            [KeyboardButton(text=settings)],  # Указываем "text" явно
+            [KeyboardButton(text=questions), KeyboardButton(text=orders)]  # Указываем "text" для каждой кнопки
+        ]
+    )
 
     await message.answer('Меню', reply_markup=markup)
 
 
-@dp.message_handler(IsUser(), commands='menu')
+@router.message(IsUser(), Command('menu'))
 async def user_menu(message: Message):
-    markup = ReplyKeyboardMarkup(selective=True)
-    markup.add(catalog)
-    markup.add(cart)
-    markup.add(delivery_status)
+    # Создаем клавиатуру с кнопками для пользователя
+    markup = ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        selective=True,
+        keyboard=[
+            [KeyboardButton(text=catalog)],  # Указываем "text" явно
+            [KeyboardButton(text=cart)],  # Указываем "text" для каждой кнопки
+            [KeyboardButton(text=delivery_status)]  # Указываем "text" для каждой кнопки
+        ]
+    )
 
     await message.answer('Меню', reply_markup=markup)
+
+
+@router.message()
+async def example_handler(message):
+    await message.answer("Это пример обработчика в модуле menu.")
+
+
+@router.message()
+async def handle_user_message(message):
+    await message.answer("Это сообщение обработано 'user.menu'.")

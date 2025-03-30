@@ -1,10 +1,16 @@
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher
+from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.client.bot import DefaultBotProperties  # Добавлен импорт DefaultBotProperties
 from utils.db.storage import DatabaseManager
 
 from data import config
 
-bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
+# Исправленный код инициализации бота
+bot = Bot(
+    token=config.BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)  # Передаем parse_mode через DefaultBotProperties
+)
 storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(storage=storage)
 db = DatabaseManager('data/database.db')
